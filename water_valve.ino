@@ -138,7 +138,7 @@ void mqttSendState(void) {
     snprintf (msg_buffer, 50, "%lu", uptime_minutes);
     Serial.print("Publish message: ");
     Serial.println(msg_buffer);
-    mqttClient.publish("MQTT_UPTIME_MINUTES", msg_buffer);
+    mqttClient.publish(MQTT_UPTIME_MINUTES, msg_buffer);
   }
 }
 
