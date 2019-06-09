@@ -2,17 +2,21 @@
 #include <PubSubClient.h>
 #include "passwords.h"
 
-// led
+/* led and pump configuration */
 #define LED LED_BUILTIN // D4
 #define PUMP_GPIO 0
 #define PUMP_ON_TIME (5*60*1000UL) // 5 minutes
 #define PUMP_OFF_TIME (3*60*1000L) // 3 minutes
 
+/* mqtt channels */
+#define MQTT_CONTROL "flower/valve"
+#define MQTT_UPTIME_MINUTES "flower/uptime_minutes"
+#define MQTT_STATE "flower/current_state"
+
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 long lastMsg = 0;
-char msg[50];
-int value = 0;
+char msg_buffer[50];
 
 int pump_state = 0;
 int pump_enabled = 0;
@@ -36,6 +40,7 @@ void turn_on_pump() {
   // but actually the LED is on; this is because
   // it is active low on the ESP-01)
   digitalWrite(PUMP_GPIO, LOW);
+  mqttClient.publish(MQTT_STATE, "on", 2);
 }
 
 void turn_off_pump() {
@@ -44,6 +49,7 @@ void turn_off_pump() {
 
   digitalWrite(LED, HIGH);  // Turn the LED off by making the voltage HIGH
   digitalWrite(PUMP_GPIO, HIGH);
+  mqttClient.publish(MQTT_STATE, "off", 2);
 }
 
 void loop_pump() {
@@ -65,10 +71,10 @@ void setup_wifi() {
   // We start by connecting to a WiFi network
   Serial.println();
   Serial.print("Connecting to ");
-  Serial.println(wifi_ssid);
+  Serial.println(WIFI_SSID);
   WiFi.mode(WIFI_STA);
 
-  WiFi.begin(wifi_ssid, wifi_password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -106,12 +112,12 @@ void mqttReconnect() {
     Serial.print("Attempting MQTT connection...");
     String clientId = "ESP8266Client";
     // Attempt to connect
-    if (mqttClient.connect(clientId.c_str(), mqtt_user, mqtt_password)) {
+    if (mqttClient.connect(clientId.c_str(), MQTT_USER, MQTT_PASSWORD, MQTT_STATE, 0, true, "disconnected")) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      mqttClient.publish("flower/pump", "connected");
+      mqttClient.publish(MQTT_STATE, "connected");
       // ... and resubscribe
-      mqttClient.subscribe("flower/valve");
+      mqttClient.subscribe(MQTT_CONTROL);
     } else {
       disable_pump();
       Serial.print("failed, rc=");
@@ -124,14 +130,15 @@ void mqttReconnect() {
 }
 
 void mqttSendState(void) {
+  static unsigned long uptime_minutes = 0U;
   long now = millis();
   if (now - lastMsg > 60*1000) {
     lastMsg = now;
-    ++value;
-    snprintf (msg, 50, "#%d Enable: %d   Pump state: %d", value, pump_enabled, pump_state);
+    ++uptime_minutes;
+    snprintf (msg_buffer, 50, "%lu", uptime_minutes);
     Serial.print("Publish message: ");
-    Serial.println(msg);
-    mqttClient.publish("flower/pump", msg);
+    Serial.println(msg_buffer);
+    mqttClient.publish("MQTT_UPTIME_MINUTES", msg_buffer);
   }
 }
 
@@ -146,7 +153,7 @@ void setup() {
   turn_off_pump();
   Serial.begin(115200);
   setup_wifi();
-  mqttClient.setServer(mqtt_server, 1883);
+  mqttClient.setServer(MQTT_SERVER, 1883);
   mqttClient.setCallback(mqttCallback);
 }
 
@@ -157,4 +164,3 @@ void loop() {
   
   delay(100);
 }
-
