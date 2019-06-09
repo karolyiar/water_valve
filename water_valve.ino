@@ -40,7 +40,7 @@ void turn_on_pump() {
   // but actually the LED is on; this is because
   // it is active low on the ESP-01)
   digitalWrite(PUMP_GPIO, LOW);
-  mqttClient.publish(MQTT_STATE, "on", 2);
+  mqttClient.publish(MQTT_STATE, "on", true);
 }
 
 void turn_off_pump() {
@@ -49,7 +49,7 @@ void turn_off_pump() {
 
   digitalWrite(LED, HIGH);  // Turn the LED off by making the voltage HIGH
   digitalWrite(PUMP_GPIO, HIGH);
-  mqttClient.publish(MQTT_STATE, "off", 2);
+  mqttClient.publish(MQTT_STATE, "off", true);
 }
 
 void loop_pump() {
@@ -115,7 +115,7 @@ void mqttReconnect() {
     if (mqttClient.connect(clientId.c_str(), MQTT_USER, MQTT_PASSWORD, MQTT_STATE, 0, true, "disconnected")) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      mqttClient.publish(MQTT_STATE, "connected");
+      mqttClient.publish(MQTT_STATE, "connected", true);
       // ... and resubscribe
       mqttClient.subscribe(MQTT_CONTROL);
     } else {
