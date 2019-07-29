@@ -32,7 +32,7 @@ void disable_pump(void) {
   turn_off_pump();
 }
 
-void turn_on_pump() {
+void turn_on_pump(void) {
   pump_state = true;
   pump_changed_since = millis();
 
@@ -43,7 +43,7 @@ void turn_on_pump() {
   mqttClient.publish(MQTT_STATE, "on", true);
 }
 
-void turn_off_pump() {
+void turn_off_pump(void) {
   pump_state = false;
   pump_changed_since = millis();
 
@@ -52,7 +52,7 @@ void turn_off_pump() {
   mqttClient.publish(MQTT_STATE, "off", true);
 }
 
-void loop_pump() {
+void loop_pump(void) {
   if (pump_enabled) {
     if (pump_state) {
       if (millis() - pump_changed_since > PUMP_ON_TIME) {
@@ -63,10 +63,20 @@ void loop_pump() {
         turn_on_pump();
       }
     }
+  } else if (pump_state) {
+    turn_off_pump();
   }
 }
 
-void setup_wifi() {
+void loop_wifi(void) {
+  while (WiFi.status() != WL_CONNECTED) {
+    disable_pump();
+    delay(500);
+    Serial.print(".");
+  }
+}
+
+void setup_wifi(void) {
   delay(10);
   // We start by connecting to a WiFi network
   Serial.println();
@@ -106,7 +116,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-void mqttReconnect() {
+void mqttReconnect(void) {
   // Loop until we're reconnected
   while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
@@ -158,6 +168,7 @@ void setup() {
 }
 
 void loop() {
+  loop_wifi();
   loop_mqtt();
   loop_pump();
   mqttSendState();
