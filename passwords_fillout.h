@@ -6,5 +6,6 @@
 #define MQTT_SERVER "192.168.xxx.xxx"
 #define MQTT_USER "xxx"
 #define MQTT_PASSWORD "xxxxxxxx"
+#define OTA_PASSWORD "xxxxxxxx"
 
 #endif
