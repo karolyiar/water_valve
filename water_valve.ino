@@ -69,14 +69,22 @@ void loop_pump(void) {
 }
 
 void loop_wifi(void) {
-  while (WiFi.status() != WL_CONNECTED) {
+  char i = 0;
+  while ((WiFi.status() != WL_CONNECTED) && (i < 10)) {
     disable_pump();
     delay(500);
     Serial.print(".");
+    i++;
+  }
+
+  if (i >= 10) {
+    /* No connection, enabling the wifi hotspot should happen here */
+    ESP.restart();
   }
 }
 
 void setup_wifi(void) {
+  char i = 0;
   delay(10);
   // We start by connecting to a WiFi network
   Serial.println();
@@ -86,9 +94,15 @@ void setup_wifi(void) {
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  while ((WiFi.status() != WL_CONNECTED) && (i < 10)) {
     delay(500);
     Serial.print(".");
+    i++;
+  }
+
+  if (i >= 10) {
+    /* No connection, enabling the wifi hotspot should happen here */
+    ESP.restart();
   }
 
   Serial.println("");
