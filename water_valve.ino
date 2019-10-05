@@ -26,11 +26,13 @@ long pump_changed_since;
 void enable_pump(void) {
   pump_enabled = true;
   turn_on_pump();
+  mqttClient.publish(MQTT_STATE, "on", true);
 }
 
 void disable_pump(void) {
   pump_enabled = false;
   turn_off_pump();
+  mqttClient.publish(MQTT_STATE, "off", true);
 }
 
 void turn_on_pump(void) {
@@ -41,7 +43,6 @@ void turn_on_pump(void) {
   // but actually the LED is on; this is because
   // it is active low on the ESP-01)
   digitalWrite(PUMP_GPIO, LOW);
-  mqttClient.publish(MQTT_STATE, "on", true);
 }
 
 void turn_off_pump(void) {
@@ -50,7 +51,6 @@ void turn_off_pump(void) {
 
   digitalWrite(LED, HIGH);  // Turn the LED off by making the voltage HIGH
   digitalWrite(PUMP_GPIO, HIGH);
-  mqttClient.publish(MQTT_STATE, "off", true);
 }
 
 void loop_pump(void) {
@@ -78,9 +78,9 @@ void loop_wifi(void) {
     i++;
   }
 
-  if (i >= 20) {
+  if (i >= 60) {
     /* No connection, enabling the wifi hotspot should happen here */
-    ESP.restart();
+    ESP.reset();
   }
 }
 
@@ -101,9 +101,9 @@ void setup_wifi(void) {
     i++;
   }
 
-  if (i >= 20) {
+  if (i >= 60) {
     /* No connection, enabling the wifi hotspot should happen here */
-    ESP.restart();
+    ESP.reset();
   }
 
   Serial.println("");
